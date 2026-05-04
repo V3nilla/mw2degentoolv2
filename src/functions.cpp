@@ -3,8 +3,9 @@
 #include "functions.h"
 #include "variables.h"
 #include <string>
-#include <iostream>
-#include <thread>
+#include <cstdint>
+//#include <iostream>
+//#include <thread>
 #include <cstdlib> // Needed for std::atoi
 
 SV_GameSendServerCommand_t SV_GameSendServerCommand = (SV_GameSendServerCommand_t)0x588340;
@@ -18,25 +19,43 @@ Cbuf_AddCall_t Cbuf_AddCall = (Cbuf_AddCall_t)0x563C90;
 
 namespace functions
 {
+void SetDvarInt(std::uintptr_t dvarAddress, int value)
+{
+    DWORD dwPointer = *reinterpret_cast<DWORD*>(dvarAddress);
+    *reinterpret_cast<int*>(dwPointer + 0xC) = value;
+}
+
+void SetDvarFloat(std::uintptr_t dvarAddress, float value)
+{
+    DWORD dwPointer = *reinterpret_cast<DWORD*>(dvarAddress);
+    *reinterpret_cast<float*>(dwPointer + 0xC) = value;
+}
+
     // Values
     // Memory Addresses
-    int mFOV = 0xAAC1F8;              // FOV
-    int mFOVMin = 0x88CB54;           // FOV Min
-    int mFPS = 0x1B90730;             // FPS
-    int mChat = 0xAA61C0;             // Chat
-    int mMapSize = 0x886E7C;          // Map Size
-    int mBypassMouseInput = 0xAB2B0C; // Mouse Bypass Input
-    int mMouseAccel = 0xBC37E0;       // Mouse Acceleration
-    int mYawSpeed = 0xAB2B08;         // Yaw Speed
-    int mPitchSpeed = 0xAB2B14;       // Pitch Speed
-    int mMouseFilter = 0xBC4490;      // m_filter
-
-    int mNoCamo1 = 0x695D9C4;  // No Camo
-    int mNoCamo2 = 0x695D860;  // No Camo
-    int mNoFog1 = 0x695DB18;   // No Fog
-    int mNoFog2 = 0x695D9D0;   // No Fog
-    int mNoBullets = 0x88E20C; // No Bullets
-    int mMovie = 0x695D898;    // Movies
+    std::uintptr_t mFOV = 0xAAC1F8;              // FOV
+    std::uintptr_t mFOVMin = 0x88CB54;           // FOV Min
+    std::uintptr_t mFPS = 0x1B90730;             // FPS
+    std::uintptr_t mChat = 0xAA61C0;             // Chat
+    std::uintptr_t mMapSize = 0x886E7C;          // Map Size
+    std::uintptr_t mBypassMouseInput = 0xAB2B0C; // Mouse Bypass Input
+    std::uintptr_t mMouseAccel = 0xBC37E0;       // Mouse Acceleration
+    std::uintptr_t mYawSpeed = 0xAB2B08;         // Yaw Speed
+    std::uintptr_t mPitchSpeed = 0xAB2B14;       // Pitch Speed
+    std::uintptr_t mMouseFilter = 0xBC4490;      // m_filter
+    std::uintptr_t mNoCamo1 = 0x695D9C4;  // No Camo
+    std::uintptr_t mNoCamo2 = 0x695D860;  // No Camo
+    std::uintptr_t mNoFog1 = 0x695DB18;   // No Fog
+    std::uintptr_t mNoFog2 = 0x695D9D0;   // No Fog
+    std::uintptr_t mNoBullets = 0x88E20C; // No Bullets
+    std::uintptr_t mMovie = 0x695D898;    // Movies
+    std::uintptr_t mGunX = 0xAAF7FC;       // cg_gun_x
+    std::uintptr_t mGunY = 0xAAF7D4;       // cg_gun_y
+    std::uintptr_t mGunZ = 0xAAF7E4;       // cg_gun_z
+    std::uintptr_t mCustomPort = 0x642D6CC; // net_port
+    std::uintptr_t mDLCLocation = 0x637A7C0; // DLC Location
+    std::uintptr_t mAccountLevelLoc = 0x1B8B768; // Account Level Location
+    std::uintptr_t mPrestigeLoc = 0x1B8B770; // Prestige Location
 
     void handleMouseCursor()
     {
@@ -57,8 +76,7 @@ namespace functions
     void debug()
     {
         // Make map larger to verify
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mMapSize);
-        *reinterpret_cast<float *>(dwPointer + 0xC) = 2.0f;
+        SetDvarFloat(mMapSize, 2.0f);
     }
     int getHostId()
     {
@@ -96,130 +114,74 @@ namespace functions
 
     void sendNoCamo()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mNoCamo1);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fNoCamo1;
-        DWORD dwPointer2 = *reinterpret_cast<DWORD *>(mNoCamo2);
-        *reinterpret_cast<int *>(dwPointer2 + 0xC) = variables::fNoCamo2;
-
-        if (!variables::fNoCamoBool)
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 1;  // Default
-            *reinterpret_cast<int *>(dwPointer2 + 0xC) = 1; // Default
-        }
+        SetDvarInt(mNoCamo1, variables::fNoCamoBool ? variables::fNoCamo1 : 1);
+        SetDvarInt(mNoCamo2, variables::fNoCamoBool ? variables::fNoCamo2 : 1);
     }
 
     void sendNoFog()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mNoFog1);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fNoFog1;
-        DWORD dwPointer2 = *reinterpret_cast<DWORD *>(mNoFog2);
-        *reinterpret_cast<int *>(dwPointer2 + 0xC) = variables::fNoFog2;
-
-        if (!variables::fNoCFogBool)
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 1;  // Default
-            *reinterpret_cast<int *>(dwPointer2 + 0xC) = 1; // Default
-        }
+        SetDvarInt(mNoFog1, variables::fNoCFogBool ? variables::fNoFog1 : 1);
+        SetDvarInt(mNoFog2, variables::fNoCFogBool ? variables::fNoFog2 : 1);
     }
 
     void sendNoBullets()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mNoBullets);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fNoBullets;
-
-        if (!variables::fNoBulletsBool)
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 1; // Default
-        }
+        SetDvarInt(mNoBullets, variables::fNoBulletsBool ? variables::fNoBullets : 1);
     }
 
     void sendMovie()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mMovie);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fMovie;
-
-        if (!variables::fMovieBool)
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 0; // Default
-        }
+        SetDvarInt(mMovie, variables::fMovieBool ? variables::fMovie : 0);
     }
 
     void sendFPSandFOV()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD*>(mFOV); // Get the pointer from mFOV
-        *reinterpret_cast<float*>(dwPointer + 0xC) = variables::fFieldOfView; // Write the new FOV value
-
+        SetDvarFloat(mFOV, variables::fFieldOfView);
         *reinterpret_cast<int*>(0x638152C) = variables::iFPS; // FPS
     }
 
     void sendMapSize()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mMapSize);
-        *reinterpret_cast<float *>(dwPointer + 0xC) = variables::fMapSize;
+        SetDvarFloat(mMapSize, variables::fMapSize);
     }
 
     void funFOVMin()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD*>(mFOVMin); // FOVMin base pointer
-        float *fovMinPtr = reinterpret_cast<float*>(dwPointer + 0xC);
-
-        if (variables::fFOVMin)
-        {
-            // When enabled, use the slider value
-            *fovMinPtr = variables::fFOVMinSlider;
-        }
-        else
-        {
-            // When disabled, hard reset to default once per tick
-            *fovMinPtr = variables::fFOVMinDefault;
-        }
+        SetDvarFloat(mFOVMin, variables::fFOVMin ? variables::fFOVMinSlider : variables::fFOVMinDefault);
     }
 
 
     void funChat()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mChat); // Chat
-        if (variables::bChat)
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 12000; // Enable Chat
-        }
-        else
-        {
-            *reinterpret_cast<int *>(dwPointer + 0xC) = 0; // Disable Chat
-        }
+        SetDvarInt(mChat, variables::bChat ? 12000 : 0);
     }
     void bypassMouseInput()
     {
         // cl_bypassMouseInput
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mBypassMouseInput);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fBypassMouseInput;
+        SetDvarInt(mBypassMouseInput, variables::fBypassMouseInput);
     }
 
     void mouseAccel()
     {
         // cl_mouseAccel
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mMouseAccel);
-        *reinterpret_cast<float *>(dwPointer + 0xC) = variables::fMouseAccel;
+        SetDvarFloat(mMouseAccel, variables::fMouseAccel);
     }
 
     void yawspeed()
     {
         // cl_yawspeed
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mYawSpeed);
-        *reinterpret_cast<float *>(dwPointer + 0xC) = variables::fYawSpeed;
+        SetDvarFloat(mYawSpeed, variables::fYawSpeed);
     }
 
     void pitchspeed()
     {
         // cl_pitchspeed
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mPitchSpeed);
-        *reinterpret_cast<float *>(dwPointer + 0xC) = variables::fPitchSpeed;
+        SetDvarFloat(mPitchSpeed, variables::fPitchSpeed);
     }
 
     void mousefilter()
     {
-        DWORD dwPointer = *reinterpret_cast<DWORD *>(mMouseFilter);
-        *reinterpret_cast<int *>(dwPointer + 0xC) = variables::fMouseFilter;
+        SetDvarInt(mMouseFilter, variables::fMouseFilter);
     }
 
     void funMouseFix()
@@ -299,28 +261,28 @@ namespace functions
     }
     void doLevel70()
     {
-        *(DWORD *)0x1B8B768 = 2651000;
+        *(DWORD *)mAccountLevelLoc = 2651000;
     }
     void doLevel1()
     {
-        *(DWORD *)0x1B8B768 = 0;
+        *(DWORD *)mAccountLevelLoc = 0;
     }
     void sendPrestige(int prestige)
     {
-        *(DWORD *)0x1B8B770 = prestige;
+        *(DWORD *)mPrestigeLoc = prestige;
     }
     void doDLCMaps()
     {
         switch (variables::iDLCMode)
         {
         case 1:
-            *(int *)0x637A7C0 = 8; // DLC 1
+            *(int *)mDLCLocation = 8; // DLC 1
             break;
         case 2:
-            *(int *)0x637A7C0 = 4; // DLC 2
+            *(int *)mDLCLocation = 4; // DLC 2
             break;
         default:
-            *(int *)0x637A7C0 = 0; // No DLC
+            *(int *)mDLCLocation = 0; // No DLC
             break;
         }
     }
@@ -333,14 +295,12 @@ namespace functions
 
     void doMaxPlayers(int amount)
     {
-        if (amount < 2 || amount > 18)
-        {
-            return;
-        }
+        if(amount < 2 || amount > 18) return;
 
-        const std::string value = std::to_string(amount);
-        const std::string command = "sv_maxclients " + value + ";party_maxplayers " + value + ";ui_maxclients " + value;
+        std::string player = std::to_string(amount);
+        std::string command = "sv_maxclients " + player + ";party_maxplayers " + player + ";ui_maxclients " + player;
         Cbuf_AddText(0, command.c_str());
+
     }
     void doStartMatch()
     {
@@ -445,7 +405,7 @@ namespace functions
     }
     void doFFATeamFix()
     {
-        if (variables::bFFATeamFix == true)
+        if (variables::bFFATeamFix)
         {
             for (int i = 0; i < 18; i++)
             {
@@ -455,28 +415,28 @@ namespace functions
     }
     void handleHotkeys()
     {
-        if (GetAsyncKeyState(VK_F2) & 1)
+        if (GetAsyncKeyState(VK_F2) & 1) // F2
         {
             Cbuf_AddText(0, reinterpret_cast<const char *>(0x00AB2D88));
         }
-        if (GetAsyncKeyState(VK_F3) & 1)
+        if (GetAsyncKeyState(VK_F3) & 1) // F3
         {
             functions::doForceHost();
         }
-        if (GetAsyncKeyState(VK_F4) & 1)
+        if (GetAsyncKeyState(VK_F4) & 1) // F4
         {
             functions::ChangeGamemode();
             OpenMenu(0, "popup_gamesetup");
             Cbuf_AddText(0, "xblive_privatematch 1");
         }
-        if (GetAsyncKeyState(VK_F5) & 1)
+        if (GetAsyncKeyState(VK_F5) & 1) // F5
         {
             functions::ChangeGamemode();
             functions::doMaxPlayers(variables::iMaxPlayers);
             functions::doStartMatch();
             functions::doBalanceTeams();
         }
-        if (GetAsyncKeyState(88) & 1) // VF_58
+        if (GetAsyncKeyState(88) & 1) // Key: X
         {
             variables::bNoClip = !variables::bNoClip;
             if (variables::bNoClip)
@@ -491,9 +451,9 @@ namespace functions
     }
     void sendViewModel()
     {
-        *(float *)(*(uintptr_t *)(0xAAF7FC) + 0xC) = variables::fcg_gun_x;
-        *(float *)(*(uintptr_t *)(0xAAF7D4) + 0xC) = variables::fcg_gun_y;
-        *(float *)(*(uintptr_t *)(0xAAF7E4) + 0xC) = variables::fcg_gun_z;
+        SetDvarFloat(mGunX, variables::fcg_gun_x);
+        SetDvarFloat(mGunY, variables::fcg_gun_y);
+        SetDvarFloat(mGunZ, variables::fcg_gun_z);
     }
     void sendOpenMenu(const char *menu)
     {
@@ -548,7 +508,7 @@ namespace functions
     */
     void sendCustomPort()
     {
-        *(int *)(*(uintptr_t *)(0x642D6CC) + 0xC) = variables::customPort;
+        SetDvarInt(mCustomPort, variables::customPort);
     }
 
     void doIronSight()

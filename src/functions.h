@@ -19,8 +19,9 @@ extern BalanceTeams_t BalanceTeams;
 extern MapRestart_t MapRestart;
 extern Cbuf_AddCall_t Cbuf_AddCall;
 
-constexpr uintptr_t G_LOBBYDATA = 0x10F91E8;
-constexpr uintptr_t PARTYSESSION_P = 0x10F5A18;
+inline constexpr std::uintptr_t G_LOBBYDATA = 0x10F91E8;
+inline constexpr std::uintptr_t PARTYSESSION_P = 0x10F5A18;
+
 
 // using namespace gui;
 
