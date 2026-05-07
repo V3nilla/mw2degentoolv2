@@ -464,8 +464,12 @@ void SetDvarFloat(std::uintptr_t dvarAddress, float value)
         //const char elevatorsDepatch[] = {144, 144};
         //const char elevatorsOriginal[] = {74, 42};
         // NOP techinally too large for char which max is -128 to 127, so use signed char instead
-        const char elevatorsDepatch[] = {(char)144, (char)144};
-        const char elevatorsOriginal[] = {(char)74, (char)42};
+        //const char elevatorsDepatch[] = {(char)144, (char)144};
+        //const char elevatorsOriginal[] = {(char)74, (char)42};
+
+        // Thanks https://github.com/V3nilla
+        const char elevatorsDepatch[] = {(char)0xEB, (char)0x42};
+        const char elevatorsOriginal[] = {(char)0x74, (char)0x42};
         if (variables::bElevators)
         {
             WriteBytes((LPVOID)0x00471329, elevatorsDepatch, sizeof(elevatorsDepatch));
