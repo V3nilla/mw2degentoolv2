@@ -11,7 +11,7 @@
 namespace gui
 {
 	// Show menu?
-	inline bool open = true;
+	inline bool open = false;
 
 	// is it setup?
 	inline bool setup = false;
