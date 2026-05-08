@@ -60,6 +60,8 @@ void Setup(const HMODULE instance)
         functions::sendNoFog();
         functions::sendNoBullets();
         functions::sendMovie();
+        functions::sendBouncesToggle();
+        functions::sendElevatorsToggle();
         const std::string lightMapCmd = "r_lightMap " + std::to_string(variables::iLightMap) + ";";
         const std::string fullbrightCmd = "r_fullbright " + std::to_string(variables::iFullbright) + ";";
         if (variables::iFullbright != 0)
