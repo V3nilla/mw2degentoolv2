@@ -34,16 +34,8 @@ void Setup(const HMODULE instance)
     int activateKey = useInsert ? VK_INSERT : VK_HOME;
     const char *keyName = useInsert ? "INSERT" : "HOME";
 
-    std::cout << "[>>>] Press " << keyName << " to activate..." << std::endl;
-
-    while (!(GetAsyncKeyState(activateKey) & 1))
-    {
-        if (GetAsyncKeyState(VK_END))
-            goto UNLOAD;
-        std::this_thread::sleep_for(std::chrono::milliseconds(50));
-    }
-
-    std::cout << "[>>>] Activated! Initializing..." << std::endl;
+    std::cout << "[>>>] Tool initialized automatically." << std::endl;
+    std::cout << "[>>>] Press " << keyName << " to open/close menu." << std::endl;
 
     try
     {
@@ -60,6 +52,7 @@ void Setup(const HMODULE instance)
         functions::sendNoFog();
         functions::sendNoBullets();
         functions::sendMovie();
+        functions::clearGlass();
         functions::sendBouncesToggle();
         functions::sendElevatorsToggle();
         const std::string lightMapCmd = "r_lightMap " + std::to_string(variables::iLightMap) + ";";
