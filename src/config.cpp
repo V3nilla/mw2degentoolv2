@@ -76,6 +76,8 @@ void config::Save()
     WriteFloat("Misc", "MapSize", variables::fMapSize);
     WriteBool("Misc", "UseInsertKey", variables::bUseInsertKey);
     WriteBool("Misc", "PingText", variables::bPingText);
+    WriteBool("Misc", "BouncesEnabled", variables::bBounces);  
+    WriteBool("Misc", "ElevatorsEnabled", variables::bElevators);
 
     // Flush INI cache to disk
     WritePrivateProfileStringA(NULL, NULL, NULL, file.c_str());
@@ -128,6 +130,8 @@ void config::Load()
     variables::bGlass = ReadBool("Visuals", "ClearGlass", false);
     variables::bPingText = ReadBool("Misc", "PingText", true);
     Cbuf_AddText(0, variables::bPingText ? "cg_scoreboardPingText 1" : "cg_scoreboardPingText 0");
+    variables::bBounces = ReadBool("Misc", "BouncesEnabled", false);  
+    variables::bElevators = ReadBool("Misc", "ElevatorsEnabled", false);
 
 
     /*
