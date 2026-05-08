@@ -483,15 +483,19 @@ void SetDvarFloat(std::uintptr_t dvarAddress, float value)
     {
         //const char bounceDepatch[] = {144, 144};
         //const char bounceOriginal[] = {117, 20};
-        const char bounceDepatch[] = {(char)144, (char)144};
-        const char bounceOriginal[] = {(char)117, (char)20};
+        const char bounceDepatch[] = {(char)0x74, (char)0x14};
+        const char bounceDepatch2[] = {(char)0xEB, (char)0x35};
+        const char bounceOriginal[] = {(char)0x75, (char)0x14};
+        const char bounceOriginal2[] = {(char)0x75, (char)0x35};
         if (variables::bBounces)
         {
             WriteBytes((LPVOID)0x004736E2, bounceDepatch, sizeof(bounceDepatch));
+            WriteBytes((LPVOID)0x004736F6, bounceDepatch2, sizeof(bounceDepatch2));
         }
         else
         {
             WriteBytes((LPVOID)0x004736E2, bounceOriginal, sizeof(bounceOriginal));
+            WriteBytes((LPVOID)0x004736F6, bounceOriginal2, sizeof(bounceOriginal2));
         }
     }
 
