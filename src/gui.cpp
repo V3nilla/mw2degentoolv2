@@ -446,6 +446,8 @@ void gui::Render() noexcept {
           functions::sendNoBullets();
           functions::sendMovie();
           functions::clearGlass();
+          functions::sendBouncesToggle();  
+          functions::sendElevatorsToggle();
           const std::string lightMapCmd =
               "r_lightMap " + std::to_string(variables::iLightMap) + ";";
           const std::string fullbrightCmd =
