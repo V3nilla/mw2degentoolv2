@@ -10,7 +10,10 @@
 #include "functions.h"
 #include "variables.h"
 #include "dedigamer.h"
+#include "crosshair.hpp"
+#include "configs_corrupted.h"
 
+#include <algorithm>
 #include <iostream>
 #include <map>
 #include <stdexcept>
@@ -1122,6 +1125,8 @@ void gui::Render() noexcept {
 
       if (ImGui::BeginTabItem("Misc")) {
         ImGui::Text("Misc:");
+        ImGui::Checkbox("Crosshair Overlay", &corrupted::configs.espCrosshair.current.enabled);
+        ImGui::Separator();
         ImGui::Text("Menu Name:");
         ImGui::InputText("OpenMenu", variables::MenuName,
                          IM_ARRAYSIZE(variables::MenuName));
@@ -1271,6 +1276,19 @@ void gui::Render() noexcept {
       }
       if (ImGui::BeginTabItem("Dedigamer")) {
         dedigamer::g_tabOpen.store(true);
+
+        {
+          std::lock_guard<std::mutex> lock(dedigamer::g_state.mtx);
+          if (dedigamer::g_state.reconnectPending && 
+              GetTickCount() >= dedigamer::g_state.reconnectTriggerTick) {
+            std::string urlCopy = dedigamer::g_state.lastJoinUrl;
+            dedigamer::g_state.reconnectPending = false;
+            if (!urlCopy.empty()) {
+              ShellExecuteA(NULL, "open", urlCopy.c_str(), NULL, NULL, SW_SHOWNORMAL);
+            }
+          }
+        }
+
         ImGui::Text("Dedigamer Servers:");
         ImGui::Separator();
 
@@ -1288,6 +1306,14 @@ void gui::Render() noexcept {
           totalPlayers = dedigamer::g_state.totalPlayers;
           totalCapacity = dedigamer::g_state.totalCapacity;
         }
+
+        std::sort(servers.begin(), servers.end(), [](const DedigamerServer& a, const DedigamerServer& b) {
+          float ratioA = a.totalPlayers > 0 ? (float)a.currentPlayers / a.totalPlayers : 0.0f;
+          float ratioB = b.totalPlayers > 0 ? (float)b.currentPlayers / b.totalPlayers : 0.0f;
+          if (ratioA != ratioB) return ratioA > ratioB;
+          if (a.currentPlayers != b.currentPlayers) return a.currentPlayers > b.currentPlayers;
+          return a.name < b.name;
+        });
 
         if (isFetching) {
           ImGui::Text("Fetching...");
@@ -1327,10 +1353,18 @@ void gui::Render() noexcept {
               ImGui::Selectable(selId, false,
                   ImGuiSelectableFlags_SpanAllColumns | ImGuiSelectableFlags_AllowOverlap,
                   ImVec2(0, 0));
+              bool rowHovered = ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem);
               ImGui::SameLine();
               ImGui::TextUnformatted(srv.name.c_str());
               ImGui::TableSetColumnIndex(1);
-              ImGui::Text("%d / %d", srv.currentPlayers, srv.totalPlayers);
+              ImVec4 playerColor;
+              if (srv.totalPlayers > 0 && srv.currentPlayers >= srv.totalPlayers)
+                playerColor = ImVec4(1.0f, 0.3f, 0.3f, 1.0f); // Red - full
+              else if (srv.totalPlayers > 0 && srv.currentPlayers * 3 >= srv.totalPlayers * 2)
+                playerColor = ImVec4(1.0f, 0.9f, 0.3f, 1.0f); // Yellow - 2/3 or more
+              else
+                playerColor = ImVec4(0.3f, 1.0f, 0.3f, 1.0f); // Green - less than 2/3
+              ImGui::TextColored(playerColor, "%d / %d", srv.currentPlayers, srv.totalPlayers);
               ImGui::TableSetColumnIndex(2);
               ImGui::TextUnformatted(srv.map.c_str());
               ImGui::TableSetColumnIndex(3);
@@ -1341,8 +1375,19 @@ void gui::Render() noexcept {
               if (!srv.joinUrl.empty()) {
                 char joinLabel[16];
                 snprintf(joinLabel, sizeof(joinLabel), "Join##%d", si);
-                if (ImGui::SmallButton(joinLabel))
+                if (ImGui::SmallButton(joinLabel)) {
+                  {
+                    std::lock_guard<std::mutex> lock(dedigamer::g_state.mtx);
+                    dedigamer::g_state.lastJoinUrl = srv.joinUrl;
+                  }
                   ShellExecuteA(NULL, "open", srv.joinUrl.c_str(), NULL, NULL, SW_SHOWNORMAL);
+                }
+                if (ImGui::IsItemHovered()) rowHovered = true;
+              }
+              
+              if (rowHovered) {
+                ImU32 hoverColor = ImGui::GetColorU32(ImGuiCol_HeaderHovered);
+                ImGui::TableSetBgColor(ImGuiTableBgTarget_RowBg0, hoverColor);
               }
             }
             ImGui::EndTable();
@@ -1352,6 +1397,29 @@ void gui::Render() noexcept {
         if (ImGui::Button("Disconnect"))
           Cbuf_AddText(0, "disconnect");
         ImGui::SameLine();
+        {
+          std::lock_guard<std::mutex> lock(dedigamer::g_state.mtx);
+          bool hasLastJoin = !dedigamer::g_state.lastJoinUrl.empty();
+          bool isPending = dedigamer::g_state.reconnectPending;
+          
+          if (!hasLastJoin) {
+            ImGui::BeginDisabled();
+            ImGui::Button("Reconnect");
+            ImGui::EndDisabled();
+            if (ImGui::IsItemHovered(ImGuiHoveredFlags_AllowWhenDisabled))
+              ImGui::SetTooltip("No recent join URL");
+          } else if (isPending) {
+            ImGui::BeginDisabled();
+            ImGui::Button("Reconnecting...");
+            ImGui::EndDisabled();
+          } else {
+            if (ImGui::Button("Reconnect")) {
+              Cbuf_AddText(0, "disconnect");
+              dedigamer::g_state.reconnectPending = true;
+              dedigamer::g_state.reconnectTriggerTick = GetTickCount() + 1000;
+            }
+          }
+        }
         ImGui::EndTabItem();
       } else {
         dedigamer::g_tabOpen.store(false);
